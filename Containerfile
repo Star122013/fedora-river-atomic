@@ -69,8 +69,10 @@ RUN dnf install -y --nodocs \
   xdg-desktop-portal-gnome \
   xdg-desktop-portal-gtk \
   xwayland-satellite \
-  && dnf copr enable yalter/niri-git \
+  && dnf copr enable yalter/niri-git -y \
+  && test -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
   && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
+  && dnf install -y niri \
   && dnf clean all
 
 # 4.audio
