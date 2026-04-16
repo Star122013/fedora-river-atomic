@@ -90,9 +90,11 @@ RUN mkdir -p /run && touch /run/ostree-booted \
   kernel-modules-core \
   kernel-modules-extra \
   && KERNEL_VERSION=$(rpm -q kernel-cachyos-lto --qf '%{VERSION}-%{RELEASE}.%{ARCH}' | tail -1) \
-  && dracut --force --kver "$KERNEL_VERSION" \
+  && dracut --force --no-hostonly --reproducible --add ostree \
     --add-drivers "virtio virtio_blk virtio_scsi virtio_pci virtio_ring \
 nvme ahci xhci_hcd sd_mod" \
+    /usr/lib/modules/"$KERNEL_VERSION"/initramfs.img \
+    "$KERNEL_VERSION" \
   && rm -f /run/ostree-booted \
   && dnf clean all
 
