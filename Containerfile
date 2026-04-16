@@ -20,8 +20,6 @@
 # stage 2 make system container
 FROM quay.io/fedora/fedora-bootc:44
 
-ARG ROOT_PASSWORD_HASH='$6$ruiukXN48I4jlMqY$x3LGdwuLqUaxfF2zWgh.1FkaImgBaQb5.C24HWjCA7xEsqGsSK7b56lnAHMne9Dl56lJ3xAveAMC3ZnF.03sI1'
-
 RUN dnf update -y && dnf upgrade -y && dnf5 install 'dnf5-command(config-manager)' -y
 
 # 1.package repo enable
@@ -135,10 +133,6 @@ RUN rm -rf /nix 2>/dev/null || true \
 RUN dnf install -y --setopt=install_weak_deps=False --nodocs \
   zram-generator \
   && dnf clean all
-
-# 9.1 temporary first-boot root password hash
-RUN test -n "${ROOT_PASSWORD_HASH}" \
-  && usermod -p "${ROOT_PASSWORD_HASH}" root
 
 # 10.selinux
 RUN restorecon -RFv \
