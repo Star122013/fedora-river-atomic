@@ -91,6 +91,8 @@ RUN mkdir -p /run && touch /run/ostree-booted \
   kernel-modules-extra \
   && KERNEL_VERSION=$(rpm -q kernel-cachyos-lto --qf '%{VERSION}-%{RELEASE}.%{ARCH}' | tail -1) \
   && dracut --force --kver "$KERNEL_VERSION" \
+    --add-drivers "virtio virtio_blk virtio_scsi virtio_pci virtio_ring \
+nvme ahci xhci_hcd sd_mod" \
   && rm -f /run/ostree-booted \
   && dnf clean all
 
