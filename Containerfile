@@ -15,52 +15,12 @@
 
 # stage 1 use fedora build some software
 # niri-builder
-FROM quay.io/fedora/fedora:44 AS niri-builder
-
-RUN dnf update && dnf upgrade -y && dnf install -y \
-  gcc \
-  clang \
-  llvm \
-  cairo-gobject-devel \
-  dbus-devel \
-  fontconfig-devel \
-  libXcursor-devel \
-  libadwaita-devel \
-  libdisplay-info-devel \
-  libinput-devel \
-  libseat-devel \
-  libudev-devel \
-  libxkbcommon-devel \
-  mesa-libEGL-devel \
-  mesa-libgbm-devel \
-  pango-devel \
-  pipewire-devel \
-  systemd-devel \
-  wayland-devel \
-  rust \
-  cargo \
-  git \
-  && dnf clean all
-
-WORKDIR /build
-
-RUN git clone https://github.com/niri-wm/niri.git /build/niri --branch main --depth 1
-
-RUN cd /build/niri && \
-  cargo build --release --bin niri && \
-  mkdir -p /out/runtime/usr/lib/systemd/user \
-  /out/runtime/usr/bin \
-  /out/runtime/usr/share/wayland-sessions \
-  /out/runtime/usr/share/xdg-desktop-portal && \
-  cp /build/niri/target/release/niri /out/runtime/usr/bin/niri && \
-  cp /build/niri/resources/niri-session /out/runtime/usr/bin/niri-session && \
-  cp /build/niri/resources/niri.desktop /out/runtime/usr/share/wayland-sessions/niri.desktop && \
-  cp /build/niri/resources/niri-portals.conf /out/runtime/usr/share/xdg-desktop-portal/niri-portals.conf && \
-  cp /build/niri/resources/niri.service /out/runtime/usr/lib/systemd/user/niri.service && \
-  cp /build/niri/resources/niri-shutdown.target /out/runtime/usr/lib/systemd/user/niri-shutdown.target
+# use niri copr instead
 
 # stage 2 make system container
 FROM quay.io/fedora/fedora-bootc:44
+
+ARG ROOT_PASSWORD_HASH='$6$ruiukXN48I4jlMqY$x3LGdwuLqUaxfF2zWgh.1FkaImgBaQb5.C24HWjCA7xEsqGsSK7b56lnAHMne9Dl56lJ3xAveAMC3ZnF.03sI1'
 
 RUN dnf update -y && dnf upgrade -y && dnf5 install 'dnf5-command(config-manager)' -y
 
@@ -76,7 +36,9 @@ RUN dnf install -y \
 # 2.kernel
 RUN mkdir -p /run && touch /run/ostree-booted \
   && dnf copr enable bieszczaders/kernel-cachyos-lto -y \
+  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-lto.repo \
   && dnf copr enable bieszczaders/kernel-cachyos-addons -y \
+  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-addons.repo \
   && dnf install -y \
   kernel-cachyos-lto \
   scx-tools \
@@ -100,13 +62,15 @@ RUN mkdir -p /run && touch /run/ostree-booted \
 
 
 # 3.niri session and base kde desktop
-COPY --from=niri-builder /out/runtime /
+# COPY --from=niri-builder /out/runtime /
 RUN dnf install -y --nodocs \
   plasma-desktop \
   libseat \
   xdg-desktop-portal-gnome \
   xdg-desktop-portal-gtk \
   xwayland-satellite \
+  && dnf copr enable yalter/niri-git \
+  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
   && dnf clean all
 
 # 4.audio
@@ -169,6 +133,10 @@ RUN rm -rf /nix 2>/dev/null || true \
 RUN dnf install -y --setopt=install_weak_deps=False --nodocs \
   zram-generator \
   && dnf clean all
+
+# 9.1 temporary first-boot root password hash
+RUN test -n "${ROOT_PASSWORD_HASH}" \
+  && usermod -p "${ROOT_PASSWORD_HASH}" root
 
 # 10.selinux
 RUN restorecon -RFv \
