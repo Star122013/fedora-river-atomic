@@ -22,7 +22,9 @@ FROM quay.io/fedora/fedora-bootc:44
 
 RUN dnf update -y && dnf upgrade -y && dnf5 install 'dnf5-command(config-manager)' -y
 
-# 1.package repo enable
+COPY rootfs/ /
+
+# 1.package repo enable 
 RUN dnf install -y \
   https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
   https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm \
@@ -31,37 +33,19 @@ RUN dnf install -y \
 # && sed -i 's/^enabled=0/enabled=1' /etc/yum.repos.d/rpmfusion-nonfree.repo \
 # && sed -i 's/^enabled=0/enabled=1' /etc/yum.repos.d/rpmfusion-nonfree-updates.repo 
 
-# 2.kernel
-RUN mkdir -p /run && touch /run/ostree-booted \
-  && dnf copr enable bieszczaders/kernel-cachyos-lto -y \
-  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-lto.repo \
-  && dnf copr enable bieszczaders/kernel-cachyos-addons -y \
-  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-addons.repo \
-  && dnf install -y \
-  kernel-cachyos-lto \
-  scx-tools \
-  cachyos-settings \
-  scx-manager \
-  scx-scheds \
-  && dnf remove -y \
-  kernel \
-  kernel-core \
-  kernel-modules \
-  kernel-modules-core \
-  kernel-modules-extra \
-  && KERNEL_VERSION=$(rpm -q kernel-cachyos-lto --qf '%{VERSION}-%{RELEASE}.%{ARCH}' | tail -1) \
-  && dracut --force --no-hostonly --reproducible --add ostree \
-  --add-drivers "virtio virtio_blk virtio_scsi virtio_pci virtio_ring \
-  nvme ahci xhci_hcd sd_mod" \
-  /usr/lib/modules/"$KERNEL_VERSION"/initramfs.img \
-  "$KERNEL_VERSION" \
-  && rm -f /run/ostree-booted \
-  && dnf clean all
+# 2.kernel 
+# RUN mkdir -p /run && touch /run/ostree-booted \
+#   && dnf copr enable bieszczaders/kernel-cachyos-lto -y \
+#   && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-lto.repo \
+#   && dnf copr enable bieszczaders/kernel-cachyos-addons -y \
+#   && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-addons.repo \
+#   && dnf clean all
 
 
 # 3.niri session and base kde desktop
 # COPY --from=niri-builder /out/runtime /
 RUN dnf install -y --nodocs \
+  sddm\
   plasma-desktop \
   libseat \
   xdg-desktop-portal-gnome \
@@ -148,27 +132,16 @@ RUN restorecon -RFv \
   /etc/environment \
   /etc/locale.conf \
   /etc/skel \
-  2>/dev/null || true
+  2>/dev/null || true \
+  && systemd-sysusers
+
 
 # 11.systemctl
 RUN systemctl enable bluetooth.service \
+  && systemctl enable sddm.service \ 
   && systemctl enable nix-daemon.service \
   && systemctl enable firewalld.service \
   && systemctl enable avahi-daemon.service
-
-# 12.cleanup
-RUN rm -rf /var/log/dnf5.log* \
-  /var/cache/dnf5 \
-  /var/cache/libdnf5 \
-  /var/cache/swcatalog \
-  /var/cache/ldconfig/aux-cache \
-  /var/lib/dnf/repos/*/countme \
-  /var/lib/authselect/checksum \
-  /var/cache/libX11 \
-  /var/lib/AccountsService \
-  /var/lib/dnf \
-  /var/lib/geoclue \
-  /var/lib/rpm-state
 
 # 13.bootc lint
 RUN bootc container lint
