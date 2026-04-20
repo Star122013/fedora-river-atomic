@@ -18,7 +18,7 @@
 # use niri copr instead
 
 # stage 2 make system container
-FROM quay.io/fedora/fedora-bootc:44
+FROM quay.io/fedora/fedora-kinoite:43
 
 RUN dnf update -y && dnf upgrade -y && dnf5 install 'dnf5-command(config-manager)' -y
 
