@@ -18,7 +18,7 @@
 # use niri copr instead
 
 # stage 2 make system container
-FROM quay.io/fedora/fedora-kinoite:44
+FROM quay.io/fedora/fedora-kinoite:43
 
 COPY rootfs/ /
 
