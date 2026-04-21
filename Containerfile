@@ -86,6 +86,7 @@ RUN dnf install -y --setopt=install_weak_deps=False --nodocs \
   curl \
   distrobox \
   chezmoi \
+  busybox\
   && dnf clean all
 
 # 7.base fonts
