@@ -16,6 +16,16 @@
 # stage 1 use fedora build some software
 # niri-builder
 # use niri copr instead
+# maple fonts
+FROM alpine AS fonts-downloader
+RUN apk add --no-cache curl jq unzip \
+  && TAG=$(curl -s https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r ".tag_name") \
+  && echo latest_verion: ${TAG} \
+  && FILE="MapleMono-NF-CN.zip" \
+  && DOWNLOAD_URL="https://github.com/subframe7536/maple-font/releases/download/${TAG}/${FILE}" \
+  && curl -L ${DOWNLOAD_URL} -o /tmp/${FILE} \
+  && unzip /tmp/${FILE} -d /maple-mono-nf-cn
+  
 
 # stage 2 make system container
 FROM quay.io/fedora/fedora-kinoite:43
@@ -41,17 +51,24 @@ RUN mkdir -p /run && touch /run/ostree-booted \
 
 # 3.desktop
 # COPY --from=niri-builder /out/runtime /
-RUN dnf copr enable -y deltacopy/plasma6-applets-kara \
+RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release \
+  && dnf copr enable -y deltacopy/plasma6-applets-kara \
   && dnf copr enable hazel-bunny/ricing -y \
-  && dnf install -y plasma6-applets-kara \
-  kwin-scripts-krohnkite \
-  # xdg-desktop-portal-gnome \
-  # xdg-desktop-portal-gtk \
-  # xwayland-satellite \
-  # && dnf copr enable yalter/niri-git -y \
-  # && test -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
-  # && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
-  # && dnf install -y niri \
+  && dnf copr enable qwerhyy/misc-packages -y \
+  && dnf copr enable jkinred/satty -y \
+  && dnf copr enable alternateved/cliphist -y \
+  && dnf copr enable errornointernet/quickshell -y \
+  && dnf copr enable solopasha/hyprland -y \
+  && dnf copr enable yalter/niri-git -y \
+  && test -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
+  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
+  && dnf install -y plasma6-applets-kara kwin-scripts-krohnkite \
+  xdg-desktop-portal-gnome xdg-desktop-portal-gtk \
+  xwayland-satellite \
+  noctalia-shell-git noctalia-qs \
+  cliphist matugen brightnessctl qt6-qtmultimedia \
+  grim slurp satty \
+  niri \
   && dnf clean all
 
 # # 4.audio
@@ -78,7 +95,10 @@ RUN dnf copr enable -y deltacopy/plasma6-applets-kara \
 #   && dnf clean all
 
 # 6.system utilities + bootstrap terminal
-RUN dnf install -y --setopt=install_weak_deps=False --nodocs \
+RUN dnf copr enable -y atim/starship \
+  && dnf copr enable -y atim/nushell \
+  && dnf copr enable -y aldantanneo/jj-vcs \
+  && dnf install -y --setopt=install_weak_deps=False --nodocs \
   foot \
   xdg-user-dirs \
   xdg-utils \
@@ -89,7 +109,9 @@ RUN dnf install -y --setopt=install_weak_deps=False --nodocs \
   curl \
   distrobox \
   chezmoi \
-  busybox\
+  nushell \
+  starship \
+  jj-cli \
   && dnf clean all
 
 # 7.base fonts
@@ -97,46 +119,52 @@ RUN dnf install -y --setopt=install_weak_deps=False --nodocs \
   google-noto-sans-fonts \
   google-noto-emoji-fonts \
   && dnf clean all
+COPY --from=fonts-downloader /maple-mono-nf-cn /usr/share/fonts/
+RUN fc-cache -fv
 
 # 8.nix
-RUN dnf install -y --nodocs \
-  nix \
-  nix-daemon \
-  nix-legacy \
-  && dnf clean all
+# RUN dnf install -y --nodocs \
+#   nix \
+#   nix-daemon \
+#   nix-legacy \
+#   && dnf clean all
 
 # The nix RPM %post creates /nix as a real directory during container build.
 # bootc's / is read-only at runtime so this /nix persists — the
 # nix-store-mount.service bind-mounts /var/nix over it to share the store.
-RUN mkdir -p /var/nix
+# RUN mkdir -p /var/nix
 
-# 9.zram
+# 9. flatpak
+RUN flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+# 10.zram
 RUN dnf install -y --setopt=install_weak_deps=False --nodocs \
   zram-generator \
   && dnf clean all
 
-# 10.selinux
-RUN restorecon -RFv \
-  /usr/lib/bootc \
-  /usr/lib/dracut \
-  /usr/lib/modprobe.d \
-  /usr/lib/sddm \
-  /usr/lib/sysusers.d \
-  /usr/lib/systemd \
-  /usr/lib/tmpfiles.d \
-  /usr/share/wayland-sessions \
-  /etc/containers \
-  /etc/environment \
-  /etc/locale.conf \
-  /etc/skel \
-  2>/dev/null || true \
-  && systemd-sysusers
+# 11.selinux
+# RUN restorecon -RFv \
+#   /usr/lib/bootc \
+#   /usr/lib/dracut \
+#   /usr/lib/modprobe.d \
+#   /usr/lib/sddm \
+#   /usr/lib/sysusers.d \
+#   /usr/lib/systemd \
+#   /usr/lib/tmpfiles.d \
+#   /usr/share/wayland-sessions \
+#   /etc/containers \
+#   /etc/environment \
+#   /etc/locale.conf \
+#   /etc/skel \
+#   2>/dev/null || true \
+#   && systemd-sysusers
 
 
-# 11.systemctl
-RUN systemctl enable bluetooth.service \
-  && systemctl enable nix.mount \
-  && systemctl enable nix-daemon.service \
+# 12.systemctl
+RUN systemd-sysusers \
+  &&systemctl enable bluetooth.service \
+  # && systemctl enable nix.mount \
+  # && systemctl enable nix-daemon.service \
   && systemctl enable firewalld.service \
   && systemctl enable avahi-daemon.service
 
