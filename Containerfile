@@ -135,6 +135,8 @@ RUN dnf copr enable -y atim/starship \
   starship \
   jj-cli \
   zoxide \
+  btop \
+  nvtop \
   rg \
   fd \
   jq \
