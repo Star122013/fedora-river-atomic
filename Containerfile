@@ -52,12 +52,13 @@ RUN dnf install -y \
 # && sed -i 's/^enabled=0/enabled=1' /etc/yum.repos.d/rpmfusion-nonfree-updates.repo 
 
 # 2.kernel 
-RUN mkdir -p /run && touch /run/ostree-booted \
-  && dnf copr enable bieszczaders/kernel-cachyos-lto -y \
+# RUN mkdir -p /run && touch /run/ostree-booted \
+RUN dnf copr enable bieszczaders/kernel-cachyos-lto -y \
   && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-lto.repo \
   && dnf copr enable bieszczaders/kernel-cachyos-addons -y \
   && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-addons.repo \
   && dnf clean all
+  
 
 # 3.desktop
 # COPY --from=niri-builder /out/runtime /
@@ -158,7 +159,7 @@ COPY --from=fonts-downloader /maple-mono-nf-cn /usr/share/fonts/
 RUN fc-cache -fv
 
 # 8.grub
-COPY --from=grub-builder /usr/share/grub /usr/share
+COPY --from=grub-builder /usr/share/grub/themes /usr/share/grub/
 RUN sed -i 's|^GRUB_THEME=.*|GRUB_THEME="/usr/share/grub/themes/elegant/theme.txt"|' /etc/default/grub \
   && sed -i 's|^GRUB_GFXMODE=.*|GRUB_GFXMODE="1920x1080x32"|' /etc/default/grub \
   && sed -i 's|^GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub
