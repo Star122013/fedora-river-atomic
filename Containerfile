@@ -3,8 +3,7 @@
 # Fedora 44 with bootc 
 # https://bootc.dev/bootc/
 # Philosophy: the image provides hardware support + a working
-# niri session. Everything user-facing (waybar, rofi,
-# terminals, theming, fonts) is managed via Nix.
+# niri session.
 #
 # File placement rules (bootc):
 #   /usr/lib/   — read-only distro defaults (modprobe.d, dracut, systemd, sddm)
@@ -21,7 +20,7 @@ FROM alpine AS fonts-downloader
 RUN apk add --no-cache curl jq unzip \
   && TAG=$(curl -s https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r ".tag_name") \
   && echo latest_verion: ${TAG} \
-  && FILE="MapleMono-NF-CN.zip" \
+  && FILE="MapleMono-NF-CN-unhinted.zip" \
   && DOWNLOAD_URL="https://github.com/subframe7536/maple-font/releases/download/${TAG}/${FILE}" \
   && curl -L ${DOWNLOAD_URL} -o /tmp/${FILE} \
   && mkdir /fonts \
