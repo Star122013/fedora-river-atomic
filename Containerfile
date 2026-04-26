@@ -82,7 +82,7 @@ RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com
   cliphist matugen brightnessctl qt6-qtmultimedia \
   grim slurp satty \
   niri \
-  os-prober \
+  && dnf install -y lutris gamescope \
   && dnf clean all
 
 # # 4.audio
@@ -117,9 +117,11 @@ RUN dnf copr enable -y atim/starship \
   && dnf copr enable -y zhullyb/v2rayA \
   && dnf copr enable -y lihaohong/yazi \
   && dnf copr enable -y solopasha/hyprland \
+  && dnf copr enable -y scottames/ghostty \
   && dnf install -y --setopt=install_weak_deps=False --nodocs \
   foot \
   kitty \
+  ghostty \
   xdg-user-dirs \
   xdg-utils \
   dconf \
