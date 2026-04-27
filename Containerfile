@@ -37,7 +37,7 @@ RUN apk add --no-cache curl jq unzip \
 #   cp -r output/Elegant-forest-window-left-light /usr/share/grub/themes/elegant  
 
 # stage 2 make system container
-FROM quay.io/fedora/fedora-silverblue:44
+FROM quay.io/fedora/fedora-silverblue:43
 
 COPY rootfs/ /
 
@@ -62,7 +62,6 @@ RUN dnf copr enable bieszczaders/kernel-cachyos-lto -y \
 # 3.desktop
 # COPY --from=niri-builder /out/runtime /
 RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release \
-  && dnf copr enable -y deltacopy/plasma6-applets-kara \
   && dnf copr enable hazel-bunny/ricing -y \
   && dnf copr enable qwerhyy/misc-packages -y \
   && dnf copr enable jkinred/satty -y \
@@ -175,7 +174,7 @@ RUN systemd-sysusers \
   &&systemctl enable bluetooth.service \
   # && systemctl enable nix.mount \
   # && systemctl enable nix-daemon.service \
-  && systemctl enable grub-sync-boot-assets.service \
+  # && systemctl enable grub-sync-boot-assets.service \
   && systemctl enable firewalld.service \
   && systemctl enable avahi-daemon.service
 
