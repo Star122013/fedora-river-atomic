@@ -117,8 +117,10 @@ RUN dnf copr enable -y atim/starship \
   && dnf copr enable -y lihaohong/yazi \
   && dnf copr enable -y solopasha/hyprland \
   && dnf copr enable -y scottames/ghostty \
+  && dnf copr enable -y rivenirvana/kitty \
+  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:rivenirvana:kitty.repo \
   && dnf install -y --setopt=install_weak_deps=False --nodocs \
-  kitty ghostty \
+  kitty kitty-kitten kitty-terminfo kitty-shell-integration ghostty \
   xdg-user-dirs xdg-utils dconf libnotify cliphist \
   git jj-cli \
   wget curl dae \
