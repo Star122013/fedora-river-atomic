@@ -62,9 +62,8 @@ RUN dnf copr enable bieszczaders/kernel-cachyos-lto -y \
 # 3.desktop
 # COPY --from=niri-builder /out/runtime /
 RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release \
-  && dnf copr enable hazel-bunny/ricing -y \
   && dnf copr enable qwerhyy/misc-packages -y \
-  && dnf copr enable jkinred/satty -y \
+  && dnf copr enable eli-xciv/hyprland -y \
   && dnf copr enable alternateved/cliphist -y \
   && dnf copr enable errornointernet/quickshell -y \
   && dnf copr enable solopasha/hyprland -y \
@@ -130,6 +129,9 @@ RUN dnf copr enable -y atim/starship \
   btop nvtop rg fd jq bat tealdeer television \
   && dnf install -y https://github.com/farion1231/cc-switch/releases/download/v3.14.1/CC-Switch-v3.14.1-Linux-x86_64.rpm \
   kitty ghostty \
+  && TAG=$(curl -s https://api.github.com/repos/chen08209/FlClash/releases/latest | jq -r ".tag_name") \
+  && echo latest_verion: ${TAG} \
+  && dnf install -y https://github.com/chen08209/FlClash/releases/download/${TAG}/FlClash-${TAG#v}-linux-amd64.rpm \
   && dnf clean all
 
 # 7.base fonts
