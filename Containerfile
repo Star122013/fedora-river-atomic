@@ -68,6 +68,7 @@ RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com
   && dnf copr enable errornointernet/quickshell -y \
   && dnf copr enable solopasha/hyprland -y \
   && dnf copr enable yalter/niri-git -y \
+  && dnf copr enable swayfx/swayfx -y \
   && test -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
   && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
   && dnf install -y --setopt=install_weak_deps=False --nodocs \
@@ -78,7 +79,7 @@ RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com
   noctalia-shell-git noctalia-qs \
   cliphist matugen brightnessctl qt6-qtmultimedia kvantum \
   grim slurp satty \
-  niri \
+  niri  swayfx\
   && dnf install -y lutris gamescope mangohud \
   && dnf remove -y firefox firefox-langpacks \
   && dnf clean all
