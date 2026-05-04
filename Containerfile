@@ -68,7 +68,6 @@ RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com
   && dnf copr enable errornointernet/quickshell -y \
   && dnf copr enable solopasha/hyprland -y \
   && dnf copr enable yalter/niri-git -y \
-  && dnf copr enable swayfx/swayfx -y \
   && dnf copr enable quadratech188/vicinae -y \
   && dnf copr enable erikreider/SwayNotificationCenter -y \
   && test -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
@@ -77,11 +76,11 @@ RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com
   fcitx5 fcitx5-rime fcitx5-gtk fcitx5-qt fcitx5-configtool \
   adw-gtk3-theme nautilus gtk-murrine-engine \
   xdg-desktop-portal-gnome xdg-desktop-portal-gtk \
-  xwayland-satellite \
-  noctalia-shell-git noctalia-qs vicinae SwayNotificationCenter-git \
+  xwayland-satellite wayland-protocols-devel  libxkbcommon \
+  noctalia-shell-git noctalia-qs vicinae waybar \
   cliphist matugen brightnessctl qt6-qtmultimedia kvantum \
   grim slurp satty \
-  niri swayfx \
+  niri \
   && dnf install -y lutris gamescope mangohud \
   && dnf remove -y firefox firefox-langpacks \
   && dnf clean all
