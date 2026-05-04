@@ -17,14 +17,23 @@
 # use niri copr instead
 # maple fonts
 FROM alpine AS fonts-downloader
-RUN apk add --no-cache curl jq unzip \
-  && TAG=$(curl -s https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r ".tag_name") \
-  && echo latest_verion: ${TAG} \
-  && FILE="MapleMono-NF-CN.zip" \
-  && DOWNLOAD_URL="https://github.com/subframe7536/maple-font/releases/download/${TAG}/${FILE}" \
-  && curl -L ${DOWNLOAD_URL} -o /tmp/${FILE} \
-  && mkdir /fonts \
-  && unzip /tmp/${FILE} -d /fonts/maple-mono-nf-cn
+
+RUN apk add --no-cache curl jq unzip
+
+WORKDIR /fonts
+
+RUN set -e; \
+  download_and_unzip() { \
+    local repo=$1 file=$2 dest=$3; \
+    local tag=$(curl -s "https://api.github.com/repos/${repo}/releases/latest" | jq -r ".tag_name"); \
+    echo "Downloading ${repo} ${tag}..."; \
+    curl -L "https://github.com/${repo}/releases/download/${tag}/${file}" -o "/tmp/${file}"; \
+    mkdir -p "${dest}"; \
+    unzip -q "/tmp/${file}" -d "${dest}"; \
+    rm "/tmp/${file}"; \
+  }; \
+  download_and_unzip "subframe7536/maple-font" "MapleMono-NF-CN.zip" "maple-mono-nf-cn" && \
+  download_and_unzip "ryanoasis/nerd-fonts" "NerdFontsSymbolsOnly.zip" "nerd-fonts-symbols-only"
 
 # FROM fedora AS grub-builder
 # RUN dnf install -y curl git dialog bash 
