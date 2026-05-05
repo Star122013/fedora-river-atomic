@@ -1,3 +1,5 @@
 [tools]
+go = "latest"
+"go:github.com/reteps/dockerfmt" = "latest"
 node = "latest"
 "npm:dockerfile-language-server-nodejs" = "latest"

@@ -24,26 +24,51 @@ WORKDIR /fonts
 
 RUN set -e; \
   download_and_unzip() { \
-    local repo=$1 file=$2 dest=$3; \
-    local tag=$(curl -s "https://api.github.com/repos/${repo}/releases/latest" | jq -r ".tag_name"); \
-    echo "Downloading ${repo} ${tag}..."; \
-    curl -L "https://github.com/${repo}/releases/download/${tag}/${file}" -o "/tmp/${file}"; \
-    mkdir -p "${dest}"; \
-    unzip -q "/tmp/${file}" -d "${dest}"; \
-    rm "/tmp/${file}"; \
+  local repo=$1 file=$2 dest=$3; \
+  local tag=$(curl -s "https://api.github.com/repos/${repo}/releases/latest" | jq -r ".tag_name"); \
+  echo "Downloading ${repo} ${tag}..."; \
+  curl -L "https://github.com/${repo}/releases/download/${tag}/${file}" -o "/tmp/${file}"; \
+  mkdir -p "${dest}"; \
+  unzip -q "/tmp/${file}" -d "${dest}"; \
+  rm "/tmp/${file}"; \
   }; \
   download_and_unzip "subframe7536/maple-font" "MapleMono-NF-CN.zip" "maple-mono-nf-cn" && \
   download_and_unzip "ryanoasis/nerd-fonts" "NerdFontsSymbolsOnly.zip" "nerd-fonts-symbols-only"
 
-# FROM fedora AS grub-builder
-# RUN dnf install -y curl git dialog bash 
-# WORKDIR /tmp
-# RUN git clone https://github.com/vinceliuice/Elegant-grub2-themes.git
-# WORKDIR /tmp/Elegant-grub2-themes
-# RUN mkdir -p output && \
-#   bash generate.sh -t forest -p window -i left -c light -s 2k -d output/
-# RUN mkdir -p /usr/share/grub/themes && \
-#   cp -r output/Elegant-forest-window-left-light /usr/share/grub/themes/elegant  
+FROM fedora AS grub-builder
+RUN dnf builddep -y waybar && \
+  dnf copr enable -y celestelove/libcava && \
+  dnf install -y iniparser-devel fftw-devel alsa-lib-devel pulseaudio-libs-devel libcava-devel
+WORKDIR /tmp
+RUN git clone https://github.com/Alexays/Waybar.git --depth=1 -b master /tmp/waybar
+WORKDIR /tmp/waybar
+RUN meson setup \
+  --prefix=/usr \
+  --buildtype=plain \
+  --auto-features=disabled \
+  --wrap-mode=nodownload \
+  -Dexperimental=true \
+  -Ddbusmenu-gtk=enabled \
+  -Dlibinput=enabled \
+  -Dlibnl=enabled \
+  -Dupower_glib=enabled \
+  -Dmpris=enabled \
+  -Dpulseaudio=enabled \
+  -Dlibevdev=enabled \
+  -Dlibudev=enabled \
+  -Dmpd=enabled \
+  -Djack=enabled \
+  -Drfkill=enabled \
+  -Dsndio=disabled \
+  -Dsystemd=enabled \
+  -Dlogind=enabled \
+  -Dman-pages=enabled \
+  -Dwireplumber=enabled \
+  -Dpipewire=enabled \
+  -Dcava=enabled \
+  -Dtests=disabled \
+  build && \
+  ninja -C build
 
 # stage 2 make system container
 FROM quay.io/fedora/fedora-kinoite:44
@@ -66,12 +91,13 @@ RUN dnf copr enable bieszczaders/kernel-cachyos-lto -y \
   && dnf copr enable bieszczaders/kernel-cachyos-addons -y \
   && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-addons.repo \
   && dnf clean all
-  
+
 
 # 3.desktop
 # COPY --from=niri-builder /out/runtime /
 RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release \
   && dnf copr enable qwerhyy/misc-packages -y \
+  && dnf copr enable celestelove/libcava -y \
   && dnf copr enable eli-xciv/hyprland -y \
   && dnf copr enable alternateved/cliphist -y \
   && dnf copr enable errornointernet/quickshell -y \
@@ -85,7 +111,7 @@ RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com
   fcitx5 fcitx5-rime fcitx5-gtk fcitx5-qt fcitx5-configtool \
   adw-gtk3-theme nautilus gtk-murrine-engine \
   xdg-desktop-portal-gnome xdg-desktop-portal-gtk \
-  xwayland-satellite wayland-protocols-devel libxkbcommon river \
+  xwayland-satellite wayland-protocols-devel libxkbcommon river libcava-devel \
   noctalia-shell-git noctalia-qs vicinae waybar cava \
   cliphist matugen brightnessctl qt6-qtmultimedia kvantum \
   grim slurp satty \
