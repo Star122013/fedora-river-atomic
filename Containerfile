@@ -35,10 +35,10 @@ RUN set -e; \
   download_and_unzip "subframe7536/maple-font" "MapleMono-NF-CN.zip" "maple-mono-nf-cn" && \
   download_and_unzip "ryanoasis/nerd-fonts" "NerdFontsSymbolsOnly.zip" "nerd-fonts-symbols-only"
 
-FROM fedora AS grub-builder
+FROM fedora AS waybar-builder
 RUN dnf builddep -y waybar && \
   dnf copr enable -y celestelove/libcava && \
-  dnf install -y iniparser-devel fftw-devel alsa-lib-devel pulseaudio-libs-devel libcava-devel
+  dnf install -y git iniparser-devel fftw-devel alsa-lib-devel pulseaudio-libs-devel libcava-devel
 WORKDIR /tmp
 RUN git clone https://github.com/Alexays/Waybar.git --depth=1 -b master /tmp/waybar
 WORKDIR /tmp/waybar
@@ -68,7 +68,9 @@ RUN meson setup \
   -Dcava=enabled \
   -Dtests=disabled \
   build && \
-  ninja -C build
+  ninja -C build && \
+  mkdir -pv /output/waybar/usr/bin && \
+  install -Dm 755 /tmp/waybar/build/waybar /output/waybar/usr/bin/
 
 # stage 2 make system container
 FROM quay.io/fedora/fedora-kinoite:44
@@ -95,13 +97,14 @@ RUN dnf copr enable bieszczaders/kernel-cachyos-lto -y \
 
 # 3.desktop
 # COPY --from=niri-builder /out/runtime /
+COPY --from=waybar-builder /output/waybar /
 RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release \
   && dnf copr enable qwerhyy/misc-packages -y \
   && dnf copr enable celestelove/libcava -y \
   && dnf copr enable eli-xciv/hyprland -y \
   && dnf copr enable alternateved/cliphist -y \
-  && dnf copr enable errornointernet/quickshell -y \
   && dnf copr enable solopasha/hyprland -y \
+  && dnf copr enable scottames/awww -y \
   && dnf copr enable yalter/niri-git -y \
   && dnf copr enable quadratech188/vicinae -y \
   && dnf copr enable erikreider/SwayNotificationCenter -y \
@@ -112,8 +115,8 @@ RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com
   adw-gtk3-theme nautilus gtk-murrine-engine \
   xdg-desktop-portal-gnome xdg-desktop-portal-gtk \
   xwayland-satellite wayland-protocols-devel libxkbcommon river libcava-devel \
-  noctalia-shell-git noctalia-qs vicinae waybar cava SwayNotificationCenter-git hypridle \
-  cliphist matugen brightnessctl qt6-qtmultimedia kvantum \
+  vicinae cava SwayNotificationCenter-git hypridle awww \
+  cliphist matugen brightnessctl kvantum \
   grim slurp satty \
   niri \
   && dnf install -y lutris gamescope mangohud \
