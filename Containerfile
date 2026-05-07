@@ -175,7 +175,7 @@ RUN dnf copr enable -y atim/nushell \
   && dnf install -y --setopt=install_weak_deps=False --nodocs \
   git dae nushell distrobox image-builder zathura pixi \
   && dnf install -y https://github.com/farion1231/cc-switch/releases/download/v3.14.1/CC-Switch-v3.14.1-Linux-x86_64.rpm \
-  kitty ghostty \
+  foot foot-terminfo \
   && TAG=$(curl -s https://api.github.com/repos/chen08209/FlClash/releases/latest | jq -r ".tag_name") \
   && echo latest_verion: ${TAG} \
   && dnf install -y https://github.com/chen08209/FlClash/releases/download/${TAG}/FlClash-${TAG#v}-linux-amd64.rpm \
