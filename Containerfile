@@ -134,7 +134,7 @@ RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com
   xdg-desktop-portal-gnome xdg-desktop-portal-gtk \
   xwayland-satellite \
   wayland-protocols-devel libxkbcommon river libcava-devel \
-  playerctl playerctl-libs playerctl-devel libmpdclient libdbusmenu-gtk3 upower-libs libepoxy libevdev  gtk-layer-shell fmt\
+  playerctl playerctl-libs playerctl-devel libmpdclient libdbusmenu-gtk3 upower-libs libepoxy libevdev pixman gtk-layer-shell fmt\
   vicinae cava SwayNotificationCenter-git hypridle awww \
   cliphist matugen brightnessctl kvantum \
   grim slurp satty \
