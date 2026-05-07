@@ -70,7 +70,24 @@ RUN meson setup \
   build && \
   ninja -C build && \
   mkdir -pv /output/waybar/usr/bin && \
-  install -Dm 755 /tmp/waybar/build/waybar /output/waybar/usr/bin/
+  install -Dm 755 /tmp/waybar/build/waybar /output/waybar/usr/bin/waybar
+
+FROM fedora AS kwm-builder
+RUN dnf install -y wayland-protocols-devel libxkbcommon libxkbcommon-devel river pixman zig wayland-devel git && \
+  git clone https://github.com/kewuaa/kwm.git /tmp/kwm && \
+  git clone https://github.com/kewuaa/kwim.git /tmp/kwim
+WORKDIR /tmp/kwm
+RUN zig build -Doptimize=ReleaseSafe -Dbar=false
+WORKDIR /tmp/kwim
+RUN zig build -Doptimize=ReleaseSafe && \
+  mkdir -pv /output/kwm/usr/bin && \
+  mkdir -pv /output/kwm/usr/share && \
+  install -Dm 755 /tmp/kwm/zig-out/bin/kwm /output/kwm/usr/bin/kwm && \
+  install -Dm 755 /tmp/kwim/zig-out/bin/kwim /output/kwm/usr/bin/kwim && \
+  cp -r /tmp/kwm/zig-out/share/. /output/kwm/usr/share/ && \
+  cp -r /tmp/kwim/zig-out/share/. /output/kwm/usr/share/  
+
+
 
 # stage 2 make system container
 FROM quay.io/fedora/fedora-kinoite:44
@@ -98,6 +115,7 @@ RUN dnf copr enable bieszczaders/kernel-cachyos-lto -y \
 # 3.desktop
 # COPY --from=niri-builder /out/runtime /
 COPY --from=waybar-builder /output/waybar /
+COPY --from=kwm-builder /output/kwm /
 RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release \
   && dnf copr enable qwerhyy/misc-packages -y \
   && dnf copr enable celestelove/libcava -y \
