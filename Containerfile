@@ -117,7 +117,7 @@ RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com
   xwayland-satellite river-classic \
   wayland-protocols-devel libxkbcommon libcava-devel \
   playerctl playerctl-libs playerctl-devel libmpdclient libdbusmenu-gtk3 upower-libs libepoxy libevdev pixman gtk-layer-shell fmt \
-  vicinae cava SwayNotificationCenter-git hypridle awww fuzzel \
+  vicinae cava SwayNotificationCenter-git hypridle awww fuzzel kanshi\
   cliphist matugen brightnessctl kvantum nwg-look \
   grim slurp satty \
   niri \
@@ -153,11 +153,13 @@ RUN dnf copr enable -y atim/nushell \
   && dnf copr enable -y zhullyb/v2rayA \
   && dnf copr enable -y scottames/ghostty \
   && dnf copr enable -y rivenirvana/kitty \
+  && dnf copr enable -y peterwu/rendezvous \
   && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:rivenirvana:kitty.repo \
   && dnf install -y --setopt=install_weak_deps=False --nodocs \
   git dae nushell distrobox image-builder zathura pixi \
   && dnf install -y https://github.com/farion1231/cc-switch/releases/download/v3.14.1/CC-Switch-v3.14.1-Linux-x86_64.rpm \
   foot foot-terminfo \
+  bibata-cursor-themes \
   && TAG=$(curl -s https://api.github.com/repos/chen08209/FlClash/releases/latest | jq -r ".tag_name") \
   && echo latest_verion: ${TAG} \
   && dnf install -y https://github.com/chen08209/FlClash/releases/download/${TAG}/FlClash-${TAG#v}-linux-amd64.rpm \
