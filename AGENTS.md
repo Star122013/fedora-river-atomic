@@ -4,43 +4,99 @@ Personal Fedora atomic desktop image built with [bootc](https://bootc.dev/).
 
 ## Repository Purpose
 
-This repo builds an OCI image (`ghcr.io/star122013/fedora-niri-atomic:latest`) containing a Fedora Kinoite (KDE Plasma 6) desktop with:
-- **niri** (wayland compositor) as primary session
-- **Hyprland** and **Plasma 6** also available
+This repo builds an OCI image (`ghcr.io/star122013/fedora-niri-atomic:latest`) based on Fedora Kinoite with:
+
+- **niri** as the primary Wayland session
+- parts of the **Hyprland** and **KDE/Plasma** ecosystem
 - Chinese locale defaults (`Asia/Shanghai`, `zh_CN.UTF-8`)
-- User: `cyrene` (wheel group, password `cyrene`)
+- user customization from `config.toml`
 
-## Key Files
+## Current Build Layout
 
-- `Containerfile` — multi-stage build; stages 0-1 download fonts/grub theme, stage 2 is the final system
-- `basic.cfg` — Kickstart file for installing the image via Anaconda
-- `rootfs/` — Files copied into the container at build time (`COPY rootfs/ /`)
-- `config.toml` — System timezone/locale/user customization (used by Image Builder or similar)
+The repo no longer keeps all package/repo logic inline in `Containerfile`.
+Instead it uses **Nu + NUON** under `build/`.
 
-## Build & Deploy
+### Key files
+
+- `Containerfile` — image build entrypoint; bootstraps `nushell`, copies `build/`, then runs the Nu build pipeline
+- `build/config/repos.nuon` — repo definitions: rpmfusion, terra, COPRs, priority overrides
+- `build/config/packages.nuon` — package groups and remove list
+- `build/config/extras.nuon` — extra RPM URLs and GitHub latest-release RPMs
+- `build/config/system.nuon` — flatpak remotes and enabled systemd services
+- `build/scripts/build.nu` — top-level orchestrator
+- `build/scripts/lib/common.nu` — shared helpers
+- `build/scripts/lib/repos.nu` — repo stage logic
+- `build/scripts/lib/packages.nu` — package stage logic
+- `build/scripts/lib/system.nu` — flatpak/font/service/bootc logic
+- `build/README.md` — detailed build subsystem documentation
+- `rootfs/` — files copied into the image with `COPY rootfs/ /`
+- `config.toml` — user/timezone/locale customization
+
+## Build Flow
+
+`Containerfile` does roughly this:
+
+1. bootstrap `rpmfusion`
+2. enable `atim/nushell`
+3. install `nushell`
+4. `COPY build /tmp/build`
+5. run:
+   ```bash
+   nu /tmp/build/scripts/build.nu /tmp/build
+   ```
+
+The Nu pipeline then runs three stages:
+
+1. **repo stage** — rpmfusion / terra / rawhide disable / COPR / repo priority
+2. **package stage** — install package groups / remove packages / extra RPMs
+3. **system stage** — flatpak remotes / font cache / systemd services / `bootc container lint`
+
+## Usage
+
+### Inspect config
 
 ```bash
-# Local build (requires podman/buildah with bootc support)
-podman build -t ghcr.io/star122013/fedora-niri-atomic:latest -f Containerfile .
-
-# Validate Containerfile
-bootc container lint
-
-# Push to ghcr.io (done automatically via .github/workflows/build.yml on push + daily)
-podman push ghcr.io/star122013/fedora-niri-atomic:latest
+nu -c 'open build/config/repos.nuon | get copr.groups'
+nu -c 'open build/config/packages.nuon | get groups.desktop'
 ```
+
+### Safe preview
+
+Always prefer dry-run after config changes:
+
+```bash
+nu build/scripts/build.nu build --dry-run
+```
+
+With zmx:
+
+```bash
+zmx run system-oci -- nu build/scripts/build.nu build --dry-run
+```
+
+### Local image build
+
+```bash
+podman build -t fedora-niri-atomic:dev -f Containerfile .
+```
+
+## Agent Guidance
+
+When modifying the build system:
+
+- prefer editing `build/config/*.nuon` for data changes
+- prefer editing `build/scripts/lib/*.nu` for logic changes
+- keep `build/scripts/build.nu` thin; it should stay as orchestration only
+- keep `Containerfile` focused on build entry/bootstrap, not large inline `dnf` logic
+- run a dry-run after changing build config or build logic
+
+## Important Constraints
+
+- COPR repositories are critical; many packages come from them
+- rawhide repos are explicitly disabled for stability
+- bootstrap of `nushell` in `Containerfile` is intentional and required
+- files under `/usr/lib/` are distro defaults, `/etc/` is mutable config, `/var/` is runtime state only
 
 ## CI
 
-`.github/workflows/build.yml` builds and pushes on every push and daily at midnight UTC. No manual test step — `bootc container lint` in the Containerfile provides validation.
-
-## Tooling
-
-- **VCS**: Jujutsu (`.jj/`), not git (`.git/` exists but is secondary)
-- **Package manager**: Pixi (`.pixi/`), mise (`mise.toml`)
-
-## Special Considerations
-
-- COPR repositories are critical — many packages (niri-git, hyprland, starship, etc.) come from COPRs enabled in the Containerfile
-- Rawhide repos are explicitly disabled to avoid stability issues
-- Files under `/usr/lib/` are distro defaults; `/etc/` is mutable admin config; `/var/` is runtime state only (bootc philosophy)
+`.github/workflows/build.yml` builds and pushes on push, schedule, and manual dispatch.

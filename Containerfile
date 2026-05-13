@@ -76,56 +76,21 @@ RUN set -e; \
 FROM quay.io/fedora/fedora-kinoite:44
 
 COPY rootfs/ /
+COPY build /tmp/build
 
-# 1.package repo enable 
+# bootstrap nushell, then let Nu orchestrate repos/packages/services
 RUN dnf install -y \
   https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
   https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm \
-  && dnf config-manager setopt fedora-cisco-openh264.enabled=1 \
-  && (ls /etc/yum.repos.d/*rawhide* 2>/dev/null && find /etc/yum.repos.d/ -name '*rawhide*' -exec sed -i 's/^enabled=1/enabled=0/g' {} + || echo "no rawhide repos found, skipping")
-# && sed -i 's/^enabled=0/enabled=1' /etc/yum.repos.d/rpmfusion-nonfree.repo \
-# && sed -i 's/^enabled=0/enabled=1' /etc/yum.repos.d/rpmfusion-nonfree-updates.repo 
-
-# 2.kernel 
-# RUN mkdir -p /run && touch /run/ostree-booted \
-RUN dnf copr enable bieszczaders/kernel-cachyos-lto -y \
-  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-lto.repo \
-  && dnf copr enable bieszczaders/kernel-cachyos-addons -y \
-  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:bieszczaders:kernel-cachyos-addons.repo \
+  && dnf copr enable -y atim/nushell \
+  && dnf install -y nushell \
   && dnf clean all
-
 
 # 3.desktop
 # COPY --from=niri-builder /out/runtime /
 # COPY --from=waybar-builder /output/waybar /
-RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release \
-  && dnf copr enable qwerhyy/misc-packages -y \
-  && dnf copr enable celestelove/libcava -y \
-  && dnf copr enable eli-xciv/hyprland -y \
-  && dnf copr enable alternateved/cliphist -y \
-  && dnf copr enable solopasha/hyprland -y \
-  && dnf copr enable scottames/awww -y \
-  && dnf copr enable yalter/niri-git -y \
-  && dnf copr enable quadratech188/vicinae -y \
-  && dnf copr enable erikreider/SwayNotificationCenter -y \
-  && test -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
-  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
-  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:qwerhyy:misc-packages.repo \
-  && dnf install -y --setopt=install_weak_deps=False --nodocs \
-  copr-cli \
-  fcitx5 fcitx5-rime fcitx5-gtk fcitx5-qt fcitx5-configtool \
-  adw-gtk3-theme nautilus gtk-murrine-engine \
-  xdg-desktop-portal-gnome xdg-desktop-portal-gtk \
-  xwayland-satellite river-classic \
-  wayland-protocols-devel libxkbcommon libcava-devel \
-  playerctl playerctl-libs playerctl-devel libmpdclient libdbusmenu-gtk3 upower-libs libepoxy libevdev pixman gtk-layer-shell fmt \
-  vicinae cava SwayNotificationCenter-git hypridle awww fuzzel kanshi waybar \
-  cliphist matugen brightnessctl kvantum nwg-look \
-  grim slurp satty \
-  zmx helix \
-  && dnf install -y lutris gamescope mangohud \
-  && dnf remove -y firefox firefox-langpacks \
-  && dnf clean all
+COPY --from=fonts-downloader /fonts /usr/share/fonts/
+RUN nu /tmp/build/scripts/build.nu /tmp/build
 
 # # 4.audio
 # RUN dnf install -y --setopt=install_weak_deps=False --nodocs \
@@ -150,31 +115,6 @@ RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com
 #   fwupd \
 #   && dnf clean all
 
-# 6.system utilities + bootstrap terminal
-RUN dnf copr enable -y atim/nushell \
-  && dnf copr enable -y zhullyb/v2rayA \
-  && dnf copr enable -y scottames/ghostty \
-  && dnf copr enable -y rivenirvana/kitty \
-  && dnf copr enable -y peterwu/rendezvous \
-  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:rivenirvana:kitty.repo \
-  && dnf install -y --setopt=install_weak_deps=False --nodocs \
-  git dae nushell distrobox image-builder zathura pixi \
-  && dnf install -y https://github.com/farion1231/cc-switch/releases/download/v3.14.1/CC-Switch-v3.14.1-Linux-x86_64.rpm \
-  foot foot-terminfo \
-  bibata-cursor-themes \
-  && TAG=$(curl -s https://api.github.com/repos/chen08209/FlClash/releases/latest | jq -r ".tag_name") \
-  && echo latest_verion: ${TAG} \
-  && dnf install -y https://github.com/chen08209/FlClash/releases/download/${TAG}/FlClash-${TAG#v}-linux-amd64.rpm \
-  && dnf clean all
-
-# 7.base fonts
-RUN dnf install -y --setopt=install_weak_deps=False --nodocs \
-  google-noto-sans-fonts \
-  google-noto-emoji-fonts \
-  && dnf clean all
-COPY --from=fonts-downloader /fonts /usr/share/fonts/
-RUN fc-cache -fv
-
 # 8.grub
 # RUN mkdir -p /usr/share/grub/themes
 # COPY --from=grub-builder /usr/share/grub/themes/ /usr/share/grub/themes/
@@ -183,12 +123,10 @@ RUN fc-cache -fv
 #   && sed -i 's|^GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub
 
 # 9. flatpak
-RUN flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+# handled by /tmp/build/scripts/build.nu
 
 # 10.zram
-RUN dnf install -y --setopt=install_weak_deps=False --nodocs \
-  zram-generator \
-  && dnf clean all
+# handled by /tmp/build/scripts/build.nu
 
 # 11.selinux
 # RUN restorecon -RFv \
@@ -209,13 +147,10 @@ RUN dnf install -y --setopt=install_weak_deps=False --nodocs \
 
 
 # 12.systemctl
-RUN systemd-sysusers \
-  &&systemctl enable bluetooth.service \
-  # && systemctl enable nix.mount \
-  # && systemctl enable nix-daemon.service \
-  # && systemctl enable grub-sync-boot-assets.service \
-  && systemctl enable firewalld.service \
-  && systemctl enable avahi-daemon.service
+# handled by /tmp/build/scripts/build.nu
+#   bluetooth.service
+#   firewalld.service
+#   avahi-daemon.service
 
 # 13.bootc lint
-RUN bootc container lint
+# handled by /tmp/build/scripts/build.nu

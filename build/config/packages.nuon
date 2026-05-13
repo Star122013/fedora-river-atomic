@@ -1,0 +1,86 @@
+{
+  install_order: ["desktop" "gaming" "utils" "fonts" "system"]
+
+  groups: {
+    desktop: [
+      "copr-cli"
+      "fcitx5"
+      "fcitx5-rime"
+      "fcitx5-gtk"
+      "fcitx5-qt"
+      "fcitx5-configtool"
+      "adw-gtk3-theme"
+      "nautilus"
+      "gtk-murrine-engine"
+      "xdg-desktop-portal-gnome"
+      "xdg-desktop-portal-gtk"
+      "xwayland-satellite"
+      "river-classic"
+      "wayland-protocols-devel"
+      "libxkbcommon"
+      "libcava-devel"
+      "playerctl"
+      "playerctl-libs"
+      "playerctl-devel"
+      "libmpdclient"
+      "libdbusmenu-gtk3"
+      "upower-libs"
+      "libepoxy"
+      "libevdev"
+      "pixman"
+      "gtk-layer-shell"
+      "fmt"
+      "vicinae"
+      "cava"
+      "SwayNotificationCenter-git"
+      "hypridle"
+      "awww"
+      "fuzzel"
+      "kanshi"
+      "waybar"
+      "cliphist"
+      "matugen"
+      "brightnessctl"
+      "kvantum"
+      "nwg-look"
+      "grim"
+      "slurp"
+      "satty"
+      "zmx"
+      "helix"
+    ]
+
+    gaming: [
+      "lutris"
+      "gamescope"
+      "mangohud"
+    ]
+
+    utils: [
+      "git"
+      "dae"
+      "nushell"
+      "distrobox"
+      "image-builder"
+      "zathura"
+      "pixi"
+      "foot"
+      "foot-terminfo"
+      "bibata-cursor-themes"
+    ]
+
+    fonts: [
+      "google-noto-sans-fonts"
+      "google-noto-emoji-fonts"
+    ]
+
+    system: [
+      "zram-generator"
+    ]
+  }
+
+  remove: [
+    "firefox"
+    "firefox-langpacks"
+  ]
+}
