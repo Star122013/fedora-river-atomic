@@ -35,42 +35,42 @@ RUN set -e; \
   download_and_unzip "subframe7536/maple-font" "MapleMono-NF-CN.zip" "maple-mono-nf-cn" && \
   download_and_unzip "ryanoasis/nerd-fonts" "NerdFontsSymbolsOnly.zip" "nerd-fonts-symbols-only"
 
-FROM fedora AS waybar-builder
-RUN dnf builddep -y waybar && \
-  dnf copr enable -y celestelove/libcava && \
-  dnf install -y git iniparser-devel fftw-devel alsa-lib-devel pulseaudio-libs-devel libcava-devel
-WORKDIR /tmp
-RUN git clone https://github.com/Alexays/Waybar.git --depth=1 -b master /tmp/waybar
-WORKDIR /tmp/waybar
-RUN meson setup \
-  --prefix=/usr \
-  --buildtype=plain \
-  --auto-features=disabled \
-  --wrap-mode=nodownload \
-  -Dexperimental=true \
-  -Ddbusmenu-gtk=enabled \
-  -Dlibinput=enabled \
-  -Dlibnl=enabled \
-  -Dupower_glib=enabled \
-  -Dmpris=enabled \
-  -Dpulseaudio=enabled \
-  -Dlibevdev=enabled \
-  -Dlibudev=enabled \
-  -Dmpd=enabled \
-  -Djack=enabled \
-  -Drfkill=enabled \
-  -Dsndio=disabled \
-  -Dsystemd=enabled \
-  -Dlogind=enabled \
-  -Dman-pages=enabled \
-  -Dwireplumber=enabled \
-  -Dpipewire=enabled \
-  -Dcava=enabled \
-  -Dtests=disabled \
-  build && \
-  ninja -C build && \
-  mkdir -pv /output/waybar/usr/bin && \
-  install -Dm 755 /tmp/waybar/build/waybar /output/waybar/usr/bin/waybar
+# FROM fedora AS waybar-builder
+# RUN dnf builddep -y waybar && \
+#   dnf copr enable -y celestelove/libcava && \
+#   dnf install -y git iniparser-devel fftw-devel alsa-lib-devel pulseaudio-libs-devel libcava-devel
+# WORKDIR /tmp
+# RUN git clone https://github.com/Alexays/Waybar.git --depth=1 -b master /tmp/waybar
+# WORKDIR /tmp/waybar
+# RUN meson setup \
+#   --prefix=/usr \
+#   --buildtype=plain \
+#   --auto-features=disabled \
+#   --wrap-mode=nodownload \
+#   -Dexperimental=true \
+#   -Ddbusmenu-gtk=enabled \
+#   -Dlibinput=enabled \
+#   -Dlibnl=enabled \
+#   -Dupower_glib=enabled \
+#   -Dmpris=enabled \
+#   -Dpulseaudio=enabled \
+#   -Dlibevdev=enabled \
+#   -Dlibudev=enabled \
+#   -Dmpd=enabled \
+#   -Djack=enabled \
+#   -Drfkill=enabled \
+#   -Dsndio=disabled \
+#   -Dsystemd=enabled \
+#   -Dlogind=enabled \
+#   -Dman-pages=enabled \
+#   -Dwireplumber=enabled \
+#   -Dpipewire=enabled \
+#   -Dcava=enabled \
+#   -Dtests=disabled \
+#   build && \
+#   ninja -C build && \
+#   mkdir -pv /output/waybar/usr/bin && \
+#   install -Dm 755 /tmp/waybar/build/waybar /output/waybar/usr/bin/waybar
 
 # stage 2 make system container
 FROM quay.io/fedora/fedora-kinoite:44
@@ -97,7 +97,7 @@ RUN dnf copr enable bieszczaders/kernel-cachyos-lto -y \
 
 # 3.desktop
 # COPY --from=niri-builder /out/runtime /
-COPY --from=waybar-builder /output/waybar /
+# COPY --from=waybar-builder /output/waybar /
 RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release \
   && dnf copr enable qwerhyy/misc-packages -y \
   && dnf copr enable celestelove/libcava -y \
@@ -110,17 +110,19 @@ RUN dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com
   && dnf copr enable erikreider/SwayNotificationCenter -y \
   && test -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
   && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:yalter:niri-git.repo \
+  && printf '\npriority=1\n' >> /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:qwerhyy:misc-packages.repo \
   && dnf install -y --setopt=install_weak_deps=False --nodocs \
+  copr-cli \
   fcitx5 fcitx5-rime fcitx5-gtk fcitx5-qt fcitx5-configtool \
   adw-gtk3-theme nautilus gtk-murrine-engine \
   xdg-desktop-portal-gnome xdg-desktop-portal-gtk \
   xwayland-satellite river-classic \
   wayland-protocols-devel libxkbcommon libcava-devel \
   playerctl playerctl-libs playerctl-devel libmpdclient libdbusmenu-gtk3 upower-libs libepoxy libevdev pixman gtk-layer-shell fmt \
-  vicinae cava SwayNotificationCenter-git hypridle awww fuzzel kanshi\
+  vicinae cava SwayNotificationCenter-git hypridle awww fuzzel kanshi waybar \
   cliphist matugen brightnessctl kvantum nwg-look \
   grim slurp satty \
-  niri \
+  zmx helix \
   && dnf install -y lutris gamescope mangohud \
   && dnf remove -y firefox firefox-langpacks \
   && dnf clean all
