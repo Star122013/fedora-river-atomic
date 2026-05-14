@@ -39,6 +39,7 @@
       "fuzzel"
       "kanshi"
       "waybar"
+      "quickshell-git"
       "cliphist"
       "matugen"
       "brightnessctl"

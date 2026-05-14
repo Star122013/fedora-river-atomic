@@ -35,6 +35,7 @@
         "yalter/niri-git"
         "quadratech188/vicinae"
         "erikreider/SwayNotificationCenter"
+        "errornointernet/quickshell"
       ]
 
       utils: [
