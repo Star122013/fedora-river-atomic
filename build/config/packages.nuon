@@ -24,6 +24,7 @@
       "playerctl"
       "playerctl-libs"
       "playerctl-devel"
+      "brightnessctl"
       "libmpdclient"
       "libdbusmenu-gtk3"
       "upower-libs"
