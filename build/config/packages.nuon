@@ -69,6 +69,7 @@
       "nushell"
       "distrobox"
       "image-builder"
+      "skopeo"
       "zathura"
       "pixi"
       "foot"
