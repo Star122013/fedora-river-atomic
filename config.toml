@@ -1,13 +1,17 @@
+[customizations.installer.kickstart]
+contents = """
+graphical
+"""
 
-  [[customizations.user]]
-  name = "cyrene"
-  description = "Cyrene"
-  groups = ["wheel"]
-  password = "cyrene"
+# [[customizations.user]]
+# name = "cyrene"
+# description = "Cyrene"
+# groups = ["wheel"]
+# password = "cyrene"
 
-  [customizations.timezone]
-  timezone = "Asia/Shanghai"
+# [customizations.timezone]
+# timezone = "Asia/Shanghai"
 
-  [customizations.locale]
-  languages = ["zh_CN.UTF-8"]
-  keyboard = "us"
+# [customizations.locale]
+# languages = ["zh_CN.UTF-8"]
+# keyboard = "us"
